@@ -37,3 +37,5 @@ spec:
               value: http://catalog-service:80
             - name: SPRING_RABBITMQ_HOST
               value: polar-rabbitmq
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+              value: http://polar-keycloak/realms/PolarBookshop

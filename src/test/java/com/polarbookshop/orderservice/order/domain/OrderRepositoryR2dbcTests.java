@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.r2dbc.test.autoconfigure.DataR2dbcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Container;
@@ -12,6 +13,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 import reactor.test.StepVerifier;
+
+import static java.util.Objects.isNull;
 
 @DataR2dbcTest
 @Import( DataConfig.class )
@@ -49,6 +52,25 @@ public class OrderRepositoryR2dbcTests {
             .expectNextMatches(
                 order -> order.status().equals( OrderStatus.REJECTED )
             )
+            .verifyComplete();
+    }
+
+    @Test
+    public void whenCreateOrderNotAuthenticatedThenNoAuditMetadata() {
+        Order rejectedOrder = Order.of( "1232343451", "Title", 12.35, 2, OrderStatus.REJECTED );
+
+        StepVerifier.create( orderRepository.save( rejectedOrder ) )
+            .expectNextMatches( order -> isNull( order.createdBy() ) && isNull( order.lastModifiedBy() ) )
+            .verifyComplete();
+    }
+
+    @Test
+    @WithMockUser( "jennifer" )
+    public void whenCreateOrderAuthenticatedThenAuditMetadata() {
+        Order rejectedOrder = Order.of( "1232343452", "Title", 19.99, 4, OrderStatus.REJECTED );
+
+        StepVerifier.create( orderRepository.save( rejectedOrder ) )
+            .expectNextMatches( order -> order.createdBy().equals( "jennifer" ) && order.lastModifiedBy().equals( "jennifer" ) )
             .verifyComplete();
     }
 }
