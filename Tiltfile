@@ -9,4 +9,4 @@ custom_build(
 )
 
 # Deploy
-k8s_yaml(['k8s/deployment.yaml', 'k8s/service.yaml'])
+k8s_yaml(kustomize('k8s'))
